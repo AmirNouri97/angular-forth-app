@@ -1,6 +1,6 @@
 import { Component, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { interval, map } from 'rxjs';
+import { interval, map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +13,21 @@ export class AppComponent implements OnInit{
 
 interval$ = interval(1000)
 intervalSignal = toSignal(this.interval$,{initialValue:0})
-
+customInterval$ = new Observable((subscriber)=>{
+  let timesExecuted = 0
+  const interval = setInterval(()=>{
+  if(timesExecuted>2){
+    console.log(interval);
+    clearInterval(interval)
+    subscriber.complete()
+    return
+  }
+  
+    console.log('new value emitting ...');
+    subscriber.next({message:'new Value'})
+    timesExecuted++
+  },1000)
+})
   private destroyRef = inject(DestroyRef);
   // constructor(){
   //   effect(()=>{
@@ -37,6 +51,13 @@ const subscription = this.clickCount$.subscribe({
 this.destroyRef.onDestroy(()=>{
   subscription.unsubscribe()
 })
+
+this.customInterval$.subscribe({
+  next:(value)=>console.log(value)
+  ,complete:()=>console.log('COMPLETED !')
+  
+})
+
 }
 onClick(){
   this.clickCount.update(prev=>prev+1)
